@@ -1,0 +1,48 @@
+body{
+    margin: 0;
+}
+
+nav{
+    background-color: green;
+    margin: 0;
+    display: flex;
+}
+
+.img-logo{
+    width: 130px;
+    height: 100px;
+    background: green;
+}
+
+.nav-list{
+    color: white;
+    margin-right: 10px;
+}
+
+.nav-list:hover{
+    font-size: 32px;
+}
+
+.nav-list-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+main{
+    height: 100vh;
+}
+
+.credentials-form{
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+form {
+    width: 40vw;
+}
+.form-group{
+    margin: 15px;
+}
