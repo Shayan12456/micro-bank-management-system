@@ -23,9 +23,13 @@ const userSchema = new Schema({
         required: true
     },
     alim: {
-        type: String,
+        type: Number,
         required: true
     },
+    amount: {
+        type: Number,
+        required: true
+    }
 });
 
 module.exports = new mongoose.model("User", userSchema);

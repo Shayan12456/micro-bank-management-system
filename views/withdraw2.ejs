@@ -20,9 +20,10 @@
     </nav>
     <main>
         <div class="credentials-form">
-            <form method="POST" action="/deposit?email=<%= email %>">
+            <h3>Enter amount below amount please, maximum you can withdraw <%= left %></h3>
+            <form method="POST" action="/withdraw?email=<%= email %>">
                 <div class="form-group">
-                    <label for="amount">Deposit Amount</label>
+                    <label for="amount">Withdraw Amount</label>
                     <input name="amount2" type="number" class="form-control" id="amount" placeholder="Enter Amount" required>
                 </div>
                 <div class="form-group">

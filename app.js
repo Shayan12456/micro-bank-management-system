@@ -34,7 +34,7 @@ app.engine("ejs", ejsMate);
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/Home", (req, res)=>{
-    res.render("Home.ejs");
+    res.render("Home.ejs", { msg: req.query.msg });
 });
 
 var transporter = nodemailer.createTransport({
@@ -46,35 +46,47 @@ var transporter = nodemailer.createTransport({
 });
 let match = [];
 let tempUser;
+
 app.post("/Register", async (req, res) => {
-    const { name, email, password, country, number, alim } = req.body;
-
-    // Generate a 6-digit OTP without uppercase letters or special characters
-    const otpCode = otpGenerator.generate(6, {
-        upperCaseAlphabets: false,
-        specialChars: false
-    });
- 
-    var mailOptions = {
-        from: 'shayandanishuni@gmail.com',
-        to: email,
-        subject: 'OTP PIN CODE',
-        text: `Your OTP is ${otpCode}`
-      };  
-
-    transporter.sendMail(mailOptions, function(error, info){
-        if (error) {
-          console.log(error);
-        } else {
-          console.log('Email sent: ' + info.response);
-        }
+    const { name, email, password, country, number, alim, amount } = req.body;
+    let result = await User.findOne({email});
+    if(result != null){
+      return res.redirect(`/Home?msg=Please enter another email, that user already exists`);
+    }else{
+      // Generate a 6-digit OTP without uppercase letters or special characters
+      if(amount>alim){
+        res.redirect(`/Home?msg=Enter amount below account limit please`);
+      }else{
+      const otpCode = otpGenerator.generate(6, {
+          upperCaseAlphabets: false,
+          specialChars: false
       });
+  
+      var mailOptions = {
+          from: 'shayandanishuni@gmail.com',
+          to: email,
+          subject: 'OTP PIN CODE',
+          text: `Your OTP is ${otpCode}`
+        };  
 
-      tempUser = new User({name, email, password, country, number, alim});
-      
+      transporter.sendMail(mailOptions, function(error, info){
+          if (error) {
+            console.log(error);
+          } else {
+            console.log('Email sent: ' + info.response);
+          }
+        });
 
-    match.push(otpCode);
-    res.render("OTP.ejs");
+        tempUser = new User({name, email, password, country, number, alim, amount});
+
+        match.push(otpCode);
+        res.redirect("/OTP");
+      }
+      }
+});
+
+app.get("/OTP", async (req, res) => {
+  res.render("OTP.ejs");
 });
 
 app.post("/OTP", async (req, res) => {
@@ -82,8 +94,9 @@ app.post("/OTP", async (req, res) => {
     console.log(otp);
     console.log(match[0]);
     if(otp == match[0]){
+      let email = tempUser.email;
       await tempUser.save();
-      res.redirect("/deposit");
+      res.redirect(`/deposit?email=${email}`);
     }else{
       res.render("OTP2.ejs");      
     }
@@ -97,23 +110,77 @@ app.post("/login", async (req, res)=>{
   let {name, email, password} = req.body;
   let result = await User.find({name, email, password});
   if(result.length!=0){
-    res.redirect("/deposit");
+    res.redirect(`/deposit?email=${email}`);
   }else{
     res.render("login2.ejs");
   }
 });
 
-app.get("/deposit", (req, res)=>{
-  res.render("deposit.ejs");
+app.get("/deposit", async (req, res)=>{
+  let {email} = req.query;
+  let result = await User.findOne({email});
+
+  res.render("deposit.ejs", {email: result.email});
 });
 
-app.post("/deposit", (req, res)=>{
-  let result = await User.find({name, email, password});
-  result[0].
+
+app.post("/deposit", async (req, res)=>{
+  let {amount2} = req.body;
+  let {email} = req.query;
+
+  const amountAsNumber = parseFloat(amount2);
+
+  let result = await User.findOne({email});
+  testAmount=result.amount + amountAsNumber;
+
+  if(testAmount<result.alim){
+    result.amount=result.amount + amountAsNumber;
+    await result.save();
+    // result.amount=result.amount + amountAsNumber; wrong approach as objectg are edited as ref type
+    res.redirect("/success-deposit");
+  }else{
+    let due = result.alim-result.amount;
+    res.render("deposit2.ejs", {email: result.email, due});
+  }
 });
 
-app.get("*", (req, res)=>{
-    res.render("Home.ejs");
+app.get("/success-deposit", (req, res)=>{
+  res.render("success-deposit.ejs");
+});
+
+app.get("/withdraw", async (req, res)=>{
+  let {email} = req.query;
+  let result = await User.findOne({email});
+
+  res.render("withdraw.ejs", {email: result.email});
+});
+
+app.post("/withdraw", async (req, res)=>{
+  let {amount2} = req.body;
+  let {email} = req.query;
+
+  const amountAsNumber = parseFloat(amount2);
+
+  let result = await User.findOne({email});
+  testAmount=result.amount - amountAsNumber;
+
+  if(testAmount>=0){
+    result.amount=result.amount - amountAsNumber;
+    await result.save();
+    // result.amount=result.amount - amountAsNumber; wrong approach as objectg are edited as ref type
+    res.redirect("/success-withdraw");
+  }else{
+    let left = result.amount;
+    res.render("withdraw2.ejs", {email: result.email, left});
+  }
+});
+
+app.get("/success-withdraw", (req, res)=>{
+  res.render("success-withdraw.ejs");
+});
+
+app.get("/account-status", (req, res)=>{
+  res.render("success-withdraw.ejs");
 });
 
 app.listen(3000, ()=>{

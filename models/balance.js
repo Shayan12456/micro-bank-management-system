@@ -1,20 +1,17 @@
 const mongoose = require("mongoose");
+const User = require("./user.js");
 const Schema = mongoose.Schema;
 
 const balanceSchema = new Schema({
-    name: {
-        type: String,
+    user: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
         required: true
     },
-    email: {
-        type: String,
+    amount: {
+        type: Number,
         required: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    amount: 
+    }
 });
 
-module.exports = new mongoose.model("Balance", userSchema);
+module.exports = new mongoose.model("Balance", balanceSchema);
