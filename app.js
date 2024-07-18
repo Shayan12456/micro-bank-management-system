@@ -1,3 +1,8 @@
+if(process.env.NODE_ENV != "production"){
+  require("dotenv").config();
+}
+
+
 const express = require("express");
 const app = express();
 const path = require('path');
@@ -18,7 +23,7 @@ main()
 });
 
 async function main(){
-  await mongoose.connect("mongodb+srv://shayandeveloper12:sa4ZQfpXJuf2WILn@micro-ban-management-sy.xs5pqg3.mongodb.net/?retryWrites=true&w=majority&appName=micro-ban-management-system");
+  await mongoose.connect(process.env.DB_URL);
 }
 
 app.set("view engine", "ejs");
@@ -61,8 +66,8 @@ app.get("/Home", (req, res)=>{
 var transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'shayandanishuni@gmail.com',
-    pass: 'mxwrdbgjhgrnakxs'
+    user: process.env.USER,
+    pass: process.env.PASS
   }
 });
 let match = [];
