@@ -22,10 +22,20 @@ main()
     console.log(err);
 });
 
-async function main(){
-  await mongoose.connect(process.env.DB_URL);
+async function main() {
+  try {
+    await mongoose.connect(process.env.DB_URL, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      // Other options as needed
+    });
+    console.log('Connected to MongoDB');
+    // Additional code or operations after successful connection
+  } catch (error) {
+    console.error('Error connecting to MongoDB:', error);
+    // Handle error, throw or exit application as necessary
+  }
 }
-
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({extended: true}));
