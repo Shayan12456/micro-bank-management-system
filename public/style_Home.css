@@ -9,7 +9,7 @@ nav{
 }
 
 .img-logo{
-    width: 130px;
+    width: 100px;
     height: 100px;
     background: green;
 }
@@ -17,10 +17,11 @@ nav{
 .nav-list{
     color: white;
     margin-right: 10px;
+    text-decoration: none;
 }
 
 .nav-list:hover{
-    font-size: 32px;
+    font-size: 17px;
 }
 
 .nav-list-container{
@@ -30,7 +31,7 @@ nav{
 }
 
 main{
-    height: 120vh;
+    height: 130vh;
 }
 
 .credentials-form{

@@ -4,24 +4,24 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="icon" href="/pngwing.com.png">
-        <title>Deposit</title>
+        <title>Withdraw</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
         <link rel="stylesheet" href="style_Home.css">
         <link rel="stylesheet" href="style_Deposit.css">
     </head>
 <body>
     <nav>
-        <img src="pngwing.com.png" class="img-logo">
+        <a href="/Home"><img src="pngwing.com.png" class="img-logo"></a>
         <span class="nav-list-container">
-            <span class="nav-list">Deposit</span>
-            <span class="nav-list">Withdraw</span>
-            <span class="nav-list">Account Status</span>
+            <a href="/deposit" class="nav-list">Deposit</a>
+            <a href="/withdraw" class="nav-list">Withdraw</a>
+            <a href="/account-status" class="nav-list">Account Status</a>
         </span>
     </nav>
     <main>
         <div class="credentials-form">
             <h3>Enter amount below amount please, maximum you can withdraw <%= left %></h3>
-            <form method="POST" action="/withdraw?email=<%= email %>">
+            <form method="POST" action="/withdraw">
                 <div class="form-group">
                     <label for="amount">Withdraw Amount</label>
                     <input name="amount2" type="number" class="form-control" id="amount" placeholder="Enter Amount" required>
@@ -34,6 +34,10 @@
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+            <hr>
+            <form action="/logout" method="POST">
+                <button class="btn btn-dark">Log Out</button>
             </form>
         </div>
     </main>

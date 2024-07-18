@@ -7,6 +7,7 @@ const nodemailer = require("nodemailer");
 const otpGenerator = require('otp-generator');
 const mongoose = require("mongoose");
 const User = require("./models/user.js");
+const session = require('express-session');
 
 main()
 .then(()=>{
@@ -33,8 +34,28 @@ app.use(methodOverride("_method"));
 app.engine("ejs", ejsMate);
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use(session({
+  secret: 'your secret', // Replace with your secret
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    maxAge: 1000 * 60 * 60,
+}}));
+
+function isLoggedIn(req, res, next) {
+  if (req.session.user) {
+        return next();
+  } else {
+      res.redirect(`/login?url=${(req.originalUrl!="/success-deposit" && req.originalUrl!="/success-withdraw" )?req.originalUrl:"/deposit"}`);
+  }
+}
+
 app.get("/Home", (req, res)=>{
-    res.render("Home.ejs", { msg: req.query.msg });
+  if(req.session.user){
+      res.render("home-login.ejs");
+  }else{
+      res.render("Home.ejs", { msg: req.query.msg });
+  }
 });
 
 var transporter = nodemailer.createTransport({
@@ -103,61 +124,67 @@ app.post("/OTP", async (req, res) => {
 });
 
 app.get("/login", (req, res)=>{
-  res.render("login.ejs");
+  let {url="/deposit"} = req.query;
+  res.render("login.ejs", {url});
 });
 
 app.post("/login", async (req, res)=>{
+  let {url} = req.query;
   let {name, email, password} = req.body;
   let result = await User.find({name, email, password});
   if(result.length!=0){
-    res.redirect(`/deposit?email=${email}`);
+    req.session.user = result[0];
+    res.redirect(url);
   }else{
-    res.render("login2.ejs");
+    res.render("login2.ejs", {url});
   }
 });
 
-app.get("/deposit", async (req, res)=>{
-  let {email} = req.query;
-  let result = await User.findOne({email});
-
-  res.render("deposit.ejs", {email: result.email});
+app.get("/deposit", isLoggedIn, async (req, res)=>{
+  // let {email} = req.query;
+  // let result = await User.findOne({email});
+  res.render("deposit.ejs");
 });
 
 
 app.post("/deposit", async (req, res)=>{
-  let {amount2} = req.body;
-  let {email} = req.query;
+  try{
+    let {amount2} = req.body;
+    let email = req.session.user.email;
 
-  const amountAsNumber = parseFloat(amount2);
+    const amountAsNumber = parseFloat(amount2);
 
-  let result = await User.findOne({email});
-  testAmount=result.amount + amountAsNumber;
+    let result = await User.findOne({email});
+    testAmount=result.amount + amountAsNumber;
 
-  if(testAmount<result.alim){
-    result.amount=result.amount + amountAsNumber;
-    await result.save();
-    // result.amount=result.amount + amountAsNumber; wrong approach as objectg are edited as ref type
-    res.redirect("/success-deposit");
-  }else{
-    let due = result.alim-result.amount;
-    res.render("deposit2.ejs", {email: result.email, due});
+    if(testAmount<result.alim){
+      result.amount=result.amount + amountAsNumber;
+      await result.save();
+      // result.amount=result.amount + amountAsNumber; wrong approach as objectg are edited as ref type
+      res.redirect("/success-deposit");
+    }else{
+      let due = result.alim-result.amount;
+      res.render("deposit2.ejs", {due});
+    }
+  }catch(e){
+    res.redirect("/login");
   }
 });
 
-app.get("/success-deposit", (req, res)=>{
+app.get("/success-deposit",isLoggedIn,(req, res)=>{
   res.render("success-deposit.ejs");
 });
 
-app.get("/withdraw", async (req, res)=>{
-  let {email} = req.query;
-  let result = await User.findOne({email});
+app.get("/withdraw", isLoggedIn, async (req, res)=>{
+  let email = req.session.user.email;
 
-  res.render("withdraw.ejs", {email: result.email});
+
+  res.render("withdraw.ejs", {email});
 });
 
 app.post("/withdraw", async (req, res)=>{
   let {amount2} = req.body;
-  let {email} = req.query;
+  let email = req.session.user.email;
 
   const amountAsNumber = parseFloat(amount2);
 
@@ -171,7 +198,7 @@ app.post("/withdraw", async (req, res)=>{
     res.redirect("/success-withdraw");
   }else{
     let left = result.amount;
-    res.render("withdraw2.ejs", {email: result.email, left});
+    res.render("withdraw2.ejs", {left});
   }
 });
 
@@ -179,8 +206,24 @@ app.get("/success-withdraw", (req, res)=>{
   res.render("success-withdraw.ejs");
 });
 
-app.get("/account-status", (req, res)=>{
-  res.render("success-withdraw.ejs");
+app.get("/account-status", isLoggedIn, async (req, res)=>{
+  let email = req.session.user.email;
+  let result = await User.findOne({email});
+
+  res.render("account-status.ejs", {result});
+});
+
+app.post('/logout', (req, res) => {
+  req.session.destroy(err => {
+      if (err) {
+          return res.status(500).send('Logout failed');
+      }
+      res.redirect('/login'); // Redirect to login page after logout
+  });
+});
+
+app.all("*",(req, res)=>{
+  res.redirect("/Home");
 });
 
 app.listen(3000, ()=>{
